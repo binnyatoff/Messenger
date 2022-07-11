@@ -1,25 +1,33 @@
 package ru.binnyatoff.messenger.ui.screens.view.login.signin
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import ru.binnyatoff.messenger.common.ActionHandler
 import ru.binnyatoff.messenger.common.EventHandler
 import ru.binnyatoff.messenger.data.network.Api
 import ru.binnyatoff.messenger.data.network.models.query.UserLogin
+import ru.binnyatoff.messenger.ui.screens.MainSharedPreferences
+import ru.binnyatoff.messenger.ui.screens.view.login.signin.models.SignInAction
 import ru.binnyatoff.messenger.ui.screens.view.login.signin.models.SignInEvent
 import ru.binnyatoff.messenger.ui.screens.view.login.signin.models.SignInViewState
 import javax.inject.Inject
 
 @HiltViewModel
-class SignInViewModel @Inject constructor(private var api: Api) : ViewModel(),
-    EventHandler<SignInEvent> {
+class SignInViewModel @Inject constructor(
+    private var api: Api,
+    private var mainSharedPreferences: MainSharedPreferences
+) : ViewModel(),
+    EventHandler<SignInEvent>, ActionHandler<SignInAction> {
 
     private val _viewState = MutableLiveData(SignInViewState())
     val viewState: LiveData<SignInViewState> = _viewState
+
+    private val _action = MutableLiveData<SignInAction>(SignInAction.None)
+    val action: LiveData<SignInAction> = _action
 
 
     override fun obtainEvent(event: SignInEvent) {
@@ -27,14 +35,22 @@ class SignInViewModel @Inject constructor(private var api: Api) : ViewModel(),
             is SignInEvent.CheckBoxClicked -> checkboxClicked(event.value)
             is SignInEvent.LoginChanged -> loginChanged(event.value)
             is SignInEvent.PasswordChanged -> passwordChanged(event.value)
-            is SignInEvent.LoginButtonClicked -> loginButtonClicked()
+        }
+    }
+
+    override fun obtainAction(action: SignInAction) {
+        when (action) {
+            is SignInAction.LoginButtonClicked -> loginButtonClicked()
         }
     }
 
 
     private fun loginButtonClicked() {
-        login()
-        Log.e("TAG", "${_viewState.value}")
+        val login = _viewState.value?.login
+        val password = _viewState.value?.password
+        if (login != null && password != null) {
+            login(login, password)
+        }
     }
 
     private fun loginChanged(value: String) {
@@ -49,25 +65,27 @@ class SignInViewModel @Inject constructor(private var api: Api) : ViewModel(),
         _viewState.postValue(_viewState.value?.copy(rememberMeChecked = value))
     }
 
-    private fun login() {
+    private fun login(login: String, password: String) {
+        _action.postValue(SignInAction.None)
+        _viewState.postValue(_viewState.value?.copy(isProgress = true))
         viewModelScope.launch {
-            Log.e("TAG", "Started")
             try {
-                val response = api.loginUser(
-                    UserLogin(
-                        login = _viewState.value?.login ?: "",
-                        password = _viewState.value?.password ?: ""
-                    )
-                )
-
+                val userLogin = UserLogin(login, password)
+                val response = api.loginUser(userLogin)
                 if (response.isSuccessful) {
-                    Log.e("TAG", response.body().toString())
+                    val body = response.body()
+                    if (body != null) {
+                        mainSharedPreferences.saveToken(body.token)
+                        _viewState.postValue(_viewState.value?.copy(isProgress = false))
+                        _action.postValue(SignInAction.TokenTrue)
+                    }
                 } else {
-                    Log.e("TAG", response.message())
+                    _viewState.postValue(_viewState.value?.copy(isProgress = false))
                 }
             } catch (e: Exception) {
-                Log.e("TAG", "$e")
+                _viewState.postValue(_viewState.value?.copy(isProgress = false))
             }
         }
     }
+
 }

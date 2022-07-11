@@ -4,7 +4,7 @@ data class SignInViewState(
     val login: String = "",
     val password: String = "",
     val rememberMeChecked: Boolean = false,
-    val isProgress:Boolean = false
+    val isProgress:Boolean = false,
 )
 
 

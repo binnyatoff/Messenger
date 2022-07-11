@@ -7,6 +7,5 @@ sealed class SignUpEvent {
     data class PasswordChanged(val value: String) : SignUpEvent()
     data class CheckBoxClicked(val value: Boolean) : SignUpEvent()
 
-    object LoginButtonClicked: SignUpEvent()
-    object ActionButtonClicked: SignUpEvent()
 }
+

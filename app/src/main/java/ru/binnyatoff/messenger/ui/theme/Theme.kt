@@ -21,5 +21,5 @@ object AppTheme {
 }
 
 val LocalColorProvider = staticCompositionLocalOf<Colors> {
-    error("No defaul colors provider ")
+    error("No default colors provider ")
 }

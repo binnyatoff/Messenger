@@ -1,4 +1,4 @@
-package ru.binnyatoff.messenger.ui.screens.view.messenger
+package ru.binnyatoff.messenger.ui.screens.view.messenger.profile
 
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable

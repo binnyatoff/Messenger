@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,8 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import ru.binnyatoff.messenger.R
-import ru.binnyatoff.messenger.ui.navigation.NavigationTree
-import ru.binnyatoff.messenger.ui.components.DTextField
+import ru.binnyatoff.messenger.ui.screens.view.navigation.NavigationTree
+import ru.binnyatoff.messenger.ui.screens.view.login.components.DTextField
+import ru.binnyatoff.messenger.ui.screens.view.login.signin.models.SignInAction
 import ru.binnyatoff.messenger.ui.screens.view.login.signin.models.SignInEvent
 import ru.binnyatoff.messenger.ui.screens.view.login.signin.models.SignInViewState
 import ru.binnyatoff.messenger.ui.theme.AppTheme
@@ -24,9 +27,12 @@ import ru.binnyatoff.messenger.ui.theme.AppTheme
 @Composable
 fun SignInView(
     signInViewModel: SignInViewModel,
-    navController: NavHostController
+    navController: NavHostController,
 ) {
+
     val viewState = signInViewModel.viewState.observeAsState(SignInViewState())
+    val action = signInViewModel.action.observeAsState(SignInAction.None)
+
     with(viewState.value) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -47,7 +53,7 @@ fun SignInView(
             item {
                 DTextField(
                     modifier = Modifier
-                        .padding(20.dp)
+                        .padding(top = 20.dp)
                         .fillMaxWidth()
                         .height(60.dp),
                     value = login,
@@ -58,9 +64,6 @@ fun SignInView(
                     label = stringResource(id = R.string.login_label)
                 )
             }
-
-            item { Spacer(modifier = Modifier.height(15.dp)) }
-
 
             item {
                 DTextField(
@@ -113,7 +116,7 @@ fun SignInView(
                             .width(180.dp)
                             .height(60.dp),
                         onClick = {
-                            signInViewModel.obtainEvent(SignInEvent.LoginButtonClicked)
+                            signInViewModel.obtainAction(SignInAction.LoginButtonClicked)
                         }) {
                         if (!isProgress) {
                             Text(text = stringResource(id = R.string.login_label))
@@ -142,12 +145,29 @@ fun SignInView(
                                     inclusive = true
                                 }
                             }
-                            signInViewModel.obtainEvent(SignInEvent.LoginButtonClicked)
+                            signInViewModel.obtainAction(SignInAction.None)
                         }) {
                         Text(text = stringResource(id = R.string.sign_up_title))
                     }
                 }
             }
         }
+
+        LaunchedEffect(key1 = action.value) {
+            when (action.value) {
+                is SignInAction.TokenTrue -> {
+                    navController.navigate(NavigationTree.Main.name) {
+                        popUpTo(NavigationTree.Splash.name) {
+                            inclusive = true
+                        }
+                    }
+                }
+            }
+        }
+        DisposableEffect(key1 = Unit, effect = {
+            onDispose {
+                signInViewModel.obtainAction(SignInAction.None)
+            }
+        })
     }
 }

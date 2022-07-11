@@ -2,22 +2,18 @@ package ru.binnyatoff.messenger.ui.screens.view.messenger
 
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import ru.binnyatoff.messenger.ui.screens.view.messenger.navigation.MainBottomNavigation
-import ru.binnyatoff.messenger.ui.screens.view.messenger.navigation.MainNavigationGraph
-
-
-enum class NavigationBottom {
-    Dialogs, Contacts, Profile
-}
+import ru.binnyatoff.messenger.ui.screens.view.messenger.navigation.MessengerNavigationGraph
 
 @Composable
-fun MainView(
+fun MainView(appNavHostController: NavHostController
 ) {
     val navController = rememberNavController()
     Scaffold(bottomBar = { MainBottomNavigation(navController = navController) })
     {
-        MainNavigationGraph(navController)
+        MessengerNavigationGraph(navController = navController, appNavHostController = appNavHostController)
     }
 }
 

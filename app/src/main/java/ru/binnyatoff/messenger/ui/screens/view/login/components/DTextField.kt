@@ -1,4 +1,5 @@
-package ru.binnyatoff.messenger.ui.components
+package ru.binnyatoff.messenger.ui.screens.view.login.components
+
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
@@ -14,7 +15,7 @@ import ru.binnyatoff.messenger.ui.theme.AppTheme
 @Composable
 fun DTextField(
     value: String,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     label: String,
     secureText: Boolean,
     enabled: Boolean = true,

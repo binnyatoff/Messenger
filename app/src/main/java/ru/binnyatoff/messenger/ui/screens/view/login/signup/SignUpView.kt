@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,8 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import ru.binnyatoff.messenger.R
-import ru.binnyatoff.messenger.ui.navigation.NavigationTree
-import ru.binnyatoff.messenger.ui.components.DTextField
+import ru.binnyatoff.messenger.ui.screens.view.navigation.NavigationTree
+import ru.binnyatoff.messenger.ui.screens.view.login.components.DTextField
+import ru.binnyatoff.messenger.ui.screens.view.login.signup.models.SignUpAction
 import ru.binnyatoff.messenger.ui.screens.view.login.signup.models.SignUpEvent
 import ru.binnyatoff.messenger.ui.screens.view.login.signup.models.SignUpViewState
 import ru.binnyatoff.messenger.ui.theme.AppTheme
@@ -27,6 +30,9 @@ fun SignUpView(
     navController: NavHostController
 ) {
     val viewState = signUpViewModel.viewState.observeAsState(SignUpViewState())
+    val action = signUpViewModel.action.observeAsState()
+
+
     with(viewState.value) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -45,6 +51,7 @@ fun SignUpView(
             }
             item {
                 DTextField(
+                    enabled = !isProgress,
                     modifier = Modifier
                         .padding(top = 20.dp)
                         .fillMaxWidth()
@@ -60,6 +67,7 @@ fun SignUpView(
 
             item {
                 DTextField(
+                    enabled = !isProgress,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp),
@@ -77,6 +85,7 @@ fun SignUpView(
 
             item {
                 DTextField(
+                    enabled = !isProgress,
                     modifier = Modifier
                         .padding(top = 4.dp)
                         .height(60.dp)
@@ -126,7 +135,7 @@ fun SignUpView(
                             .width(180.dp)
                             .height(60.dp),
                         onClick = {
-                            signUpViewModel.obtainEvent(SignUpEvent.LoginButtonClicked)
+                            signUpViewModel.obtainAction(SignUpAction.LoginButtonClicked)
                         }) {
                         if (!isProgress) {
                             Text(text = stringResource(id = R.string.sign_up_button))
@@ -151,11 +160,10 @@ fun SignUpView(
                             .height(60.dp),
                         onClick = {
                             navController.navigate(NavigationTree.SignIn.name) {
-                                popUpTo(NavigationTree.SignUp.name){
+                                popUpTo(NavigationTree.SignUp.name) {
                                     inclusive = true
                                 }
                             }
-                            signUpViewModel.obtainEvent(SignUpEvent.LoginButtonClicked)
                         }) {
                         Text(text = stringResource(id = R.string.sign_in_title))
                     }
@@ -164,5 +172,21 @@ fun SignUpView(
             }
         }
     }
+    LaunchedEffect(key1 = action.value, block = {
+        when (action.value) {
+            is SignUpAction.TokenTrue -> {
+                navController.navigate(NavigationTree.Main.name) {
+                    popUpTo(NavigationTree.Splash.name) {
+                        inclusive = true
+                    }
+                }
+            }
+        }
+    })
+    DisposableEffect(key1 = Unit, effect = {
+        onDispose {
+            signUpViewModel.obtainAction(SignUpAction.None)
+        }
+    })
 
 }
